@@ -12,22 +12,22 @@
     <h1>{{ $t("appTitle") }}</h1>
     <div class="filters">
       <select v-model="filterPriority" class="filter-input">
-        <option value="">All Priorities</option>
-        <option value="High">High</option>
-        <option value="Medium">Medium</option>
-        <option value="Low">Low</option>
+        <option value="">{{ $t("filterPriorityPlaceholder") }}</option>
+        <option value="High">{{ $t("filterPriorityHigh") }}</option>
+        <option value="Medium">{{ $t("filterPriorityMedium") }}</option>
+        <option value="Low">{{ $t("filterPriorityLow") }}</option>
       </select>
       <select v-model="filterStatus" class="filter-input">
-        <option value="">All Statuses</option>
-        <option value="toDo">To Do</option>
-        <option value="inProgress">In Progress</option>
-        <option value="done">Done</option>
+        <option value="">{{ $t("filterStatusPlaceholder") }}</option>
+        <option value="toDo">{{ $t("filterStatusToDo") }}</option>
+        <option value="inProgress">{{ $t("filterStatusInProgress") }}</option>
+        <option value="done">{{ $t("filterStatusDone") }}</option>
       </select>
       <select v-model="filterDueDate" class="filter-input">
-        <option value="">All Due Dates</option>
-        <option value="overdue">Overdue</option>
-        <option value="today">Today</option>
-        <option value="upcoming">Upcoming</option>
+        <option value="">{{ $t("filterDueDatePlaceholder") }}</option>
+        <option value="overdue">{{ $t("filterDueDateOverdue") }}</option>
+        <option value="today">{{ $t("filterDueDateToday") }}</option>
+        <option value="upcoming">{{ $t("filterDueDateUpcoming") }}</option>
       </select>
     </div>
     <div class="board">
@@ -80,6 +80,25 @@
                 <button @click="deleteTask(element)" class="delete-btn">
                   {{ $t("deleteButton") }}
                 </button>
+              </div>
+              <div class="task-comments">
+                <div
+                  v-for="(comment, index) in element.comments"
+                  :key="index"
+                  class="comment"
+                >
+                  <span class="comment-text">💬 {{ comment }}</span>
+                </div>
+                <div class="add-comment">
+                  <input
+                    v-model="element.newComment"
+                    :placeholder="$t('taskCommentPlaceholder')"
+                    class="comment-input"
+                  />
+                  <button @click="addComment(element)" class="comment-btn">
+                    {{ $t("addCommentButton") }}
+                  </button>
+                </div>
               </div>
             </div>
           </template>
@@ -178,6 +197,18 @@ export default {
       ]
     );
 
+    // Ensure all tasks have a comments array
+    columns.value.forEach((column) => {
+      column.tasks.forEach((task) => {
+        if (!task.comments) {
+          task.comments = []; // Initialize comments array if it doesn't exist
+        }
+        if (!task.newComment) {
+          task.newComment = ""; // Initialize newComment field if it doesn't exist
+        }
+      });
+    });
+
     // Save columns to localStorage whenever they change
     watch(
       columns,
@@ -250,6 +281,8 @@ export default {
         dueDate: column.newTaskDueDate,
         priority: column.newTaskPriority,
         assignee: column.newTaskAssignee,
+        comments: [], // Ensure comments array is initialized
+        newComment: "", // Ensure newComment field is initialized
         completed: false,
       });
       column.newTaskTitle = "";
@@ -267,6 +300,15 @@ export default {
       columns.value.forEach((column) => {
         column.tasks = column.tasks.filter((t) => t.id !== task.id);
       });
+    };
+
+    const addComment = (task) => {
+      if (!task.comments) {
+        task.comments = []; // Initialize comments array if it doesn't exist
+      }
+      if (task.newComment.trim() === "") return;
+      task.comments.push(task.newComment);
+      task.newComment = "";
     };
 
     const changeLanguage = (lang) => {
@@ -289,6 +331,7 @@ export default {
       addTask,
       toggleComplete,
       deleteTask,
+      addComment,
       changeLanguage,
       formatDate,
     };
@@ -582,5 +625,49 @@ h1 {
   font-size: 12px;
   color: var(--text-color);
   opacity: 0.8;
+}
+
+.task-comments {
+  margin-top: 10px;
+}
+
+.comment {
+  margin-bottom: 5px;
+}
+
+.comment-text {
+  font-size: 12px;
+  color: var(--text-color);
+  opacity: 0.8;
+}
+
+.add-comment {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.comment-input {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid var(--filter-input-border);
+  border-radius: 4px;
+  background-color: var(--filter-input-bg);
+  color: var(--text-color);
+}
+
+.comment-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  background-color: var(--button-bg);
+  color: white;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background-color 0.3s ease;
+}
+
+.comment-btn:hover {
+  background-color: var(--button-hover-bg);
 }
 </style>
