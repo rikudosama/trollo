@@ -10,6 +10,16 @@
       </button>
     </div>
     <h1>{{ $t("appTitle") }}</h1>
+    <div class="import-export">
+      <button @click="exportBoard" class="export-btn">Export Board</button>
+      <input
+        type="file"
+        @change="importBoard"
+        accept=".json"
+        class="import-input"
+      />
+      <button @click="importBoard" class="import-btn">Import Board</button>
+    </div>
     <div class="search-bar">
       <input
         v-model="searchQuery"
@@ -357,6 +367,53 @@ export default {
       return date.toLocaleString(); // Format the timestamp as needed
     };
 
+    // Export board data as a JSON file
+    const exportBoard = () => {
+      const data = JSON.stringify(columns.value, null, 2);
+      const blob = new Blob([data], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "todo-board.json";
+      a.click();
+      URL.revokeObjectURL(url);
+    };
+
+    // Import board data from a JSON file
+    const importBoard = (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = JSON.parse(e.target.result);
+          if (validateBoardData(data)) {
+            columns.value = data;
+            localStorage.setItem("todoBoard", JSON.stringify(data));
+          } else {
+            alert("Invalid board data. Please check the file and try again.");
+          }
+        } catch (error) {
+          alert("Error parsing the file. Please check the file and try again.");
+        }
+      };
+      reader.readAsText(file);
+    };
+
+    // Validate imported board data
+    const validateBoardData = (data) => {
+      if (!Array.isArray(data)) return false;
+      return data.every((column) => {
+        return (
+          column.id &&
+          column.title &&
+          column.class &&
+          Array.isArray(column.tasks)
+        );
+      });
+    };
+
     return {
       columns,
       isDarkMode,
@@ -374,6 +431,8 @@ export default {
       changeLanguage,
       formatDate,
       formatTimestamp,
+      exportBoard,
+      importBoard,
     };
   },
 };
@@ -748,5 +807,26 @@ h1 {
   border-radius: 4px;
   background-color: var(--filter-input-bg);
   color: var(--text-color);
+}
+
+.export-btn,
+.import-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  background-color: var(--button-bg);
+  color: white;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+}
+
+.export-btn:hover,
+.import-btn:hover {
+  background-color: var(--button-hover-bg);
+}
+
+.import-input {
+  display: none; /* Hide the file input */
 }
 </style>
