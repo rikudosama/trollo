@@ -74,6 +74,9 @@
                 <span class="task-due-date" v-if="element.dueDate">
                   📅 {{ formatDate(element.dueDate) }}
                 </span>
+                <span class="task-assignee" v-if="element.assignee">
+                  👤 {{ element.assignee }}
+                </span>
                 <button @click="deleteTask(element)" class="delete-btn">
                   {{ $t("deleteButton") }}
                 </button>
@@ -107,6 +110,11 @@
             <option value="Medium">Medium</option>
             <option value="Low">Low</option>
           </select>
+          <input
+            v-model="column.newTaskAssignee"
+            :placeholder="$t('taskAssigneePlaceholder')"
+            class="task-input"
+          />
           <button @click="addTask(column)" class="add-btn">
             {{ $t("addTaskButton") }}
           </button>
@@ -141,6 +149,7 @@ export default {
           newTaskTag: "bug",
           newTaskDueDate: "",
           newTaskPriority: "Medium",
+          newTaskAssignee: "",
         },
         {
           id: 2,
@@ -152,6 +161,7 @@ export default {
           newTaskTag: "bug",
           newTaskDueDate: "",
           newTaskPriority: "Medium",
+          newTaskAssignee: "",
         },
         {
           id: 3,
@@ -163,6 +173,7 @@ export default {
           newTaskTag: "bug",
           newTaskDueDate: "",
           newTaskPriority: "Medium",
+          newTaskAssignee: "",
         },
       ]
     );
@@ -238,12 +249,14 @@ export default {
         tag: column.newTaskTag,
         dueDate: column.newTaskDueDate,
         priority: column.newTaskPriority,
+        assignee: column.newTaskAssignee,
         completed: false,
       });
       column.newTaskTitle = "";
       column.newTaskDescription = "";
       column.newTaskDueDate = "";
       column.newTaskPriority = "Medium";
+      column.newTaskAssignee = "";
     };
 
     const toggleComplete = (task) => {
@@ -563,5 +576,11 @@ h1 {
     width: 100%; /* Full width for buttons on small screens */
     max-width: 200px; /* Limit maximum width */
   }
+}
+
+.task-assignee {
+  font-size: 12px;
+  color: var(--text-color);
+  opacity: 0.8;
 }
 </style>
