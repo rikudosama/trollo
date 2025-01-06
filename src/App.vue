@@ -1,8 +1,13 @@
 <template>
-  <div class="developer-todo-app">
-    <div class="language-switcher">
-      <button @click="changeLanguage('en')">English</button>
-      <button @click="changeLanguage('fr')">Français</button>
+  <div class="developer-todo-app" :class="{ 'dark-mode': isDarkMode }">
+    <div class="header">
+      <div class="language-switcher">
+        <button @click="changeLanguage('en')">English</button>
+        <button @click="changeLanguage('fr')">Français</button>
+      </div>
+      <button @click="toggleDarkMode" class="dark-mode-toggle">
+        {{ isDarkMode ? "🌙" : "☀️" }}
+      </button>
     </div>
     <h1>{{ $t("appTitle") }}</h1>
     <div class="filters">
@@ -112,7 +117,7 @@
 </template>
 
 <script>
-import { ref, watch } from "vue"; // Removed unused imports
+import { ref, watch } from "vue";
 import draggable from "vuedraggable";
 import { useI18n } from "vue-i18n";
 
@@ -170,6 +175,14 @@ export default {
       },
       { deep: true } // Deep watch to detect changes in nested objects
     );
+
+    // Dark mode
+    const isDarkMode = ref(localStorage.getItem("darkMode") === "true");
+
+    const toggleDarkMode = () => {
+      isDarkMode.value = !isDarkMode.value;
+      localStorage.setItem("darkMode", isDarkMode.value);
+    };
 
     // Filter options
     const filterPriority = ref("");
@@ -254,6 +267,8 @@ export default {
 
     return {
       columns,
+      isDarkMode,
+      toggleDarkMode,
       filterPriority,
       filterStatus,
       filterDueDate,
@@ -269,17 +284,66 @@ export default {
 </script>
 
 <style>
+/* Light mode (default) */
+:root {
+  --background-color: #f4f5f7;
+  --text-color: #172b4d;
+  --column-bg: #ffffff;
+  --task-card-bg: #ffffff;
+  --task-card-border: transparent;
+  --button-bg: #4dabf7;
+  --button-hover-bg: #3b8fd9;
+  --filter-input-bg: #ffffff;
+  --filter-input-border: #ccc;
+}
+
+/* Dark mode */
+.dark-mode {
+  --background-color: #1a1a1a;
+  --text-color: #ffffff;
+  --column-bg: #2d2d2d;
+  --task-card-bg: #3d3d3d;
+  --task-card-border: #4d4d4d;
+  --button-bg: #5aac44;
+  --button-hover-bg: #49852e;
+  --filter-input-bg: #3d3d3d;
+  --filter-input-border: #4d4d4d;
+}
+
 .developer-todo-app {
   padding: 20px;
   font-family: "Arial", sans-serif;
-  background-color: #f4f5f7;
+  background-color: var(--background-color);
   min-height: 100vh;
+  color: var(--text-color);
 }
 
 h1 {
-  text-align: center;
-  color: #172b4d;
+  text-align: center; /* Center the title */
+  color: var(--text-color);
   margin-bottom: 30px;
+}
+
+.language-switcher {
+  display: flex;
+  justify-content: center; /* Center the language switcher buttons */
+  gap: 10px; /* Add spacing between buttons */
+  margin-bottom: 20px;
+}
+
+.language-switcher button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  background-color: var(--button-bg);
+  color: white;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+}
+
+.language-switcher button:hover {
+  background-color: var(--button-hover-bg);
 }
 
 .board {
@@ -290,7 +354,7 @@ h1 {
 }
 
 .column {
-  background-color: #ffffff;
+  background-color: var(--column-bg);
   border-radius: 8px;
   padding: 15px;
   width: 300px;
@@ -323,12 +387,12 @@ h1 {
 }
 
 .task-card {
-  background-color: #ffffff;
+  background-color: var(--task-card-bg);
   border-radius: 8px;
   padding: 10px;
   margin-bottom: 10px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border-left: 4px solid transparent;
+  border-left: 4px solid var(--task-card-border);
 }
 
 .task-card.task-completed {
@@ -344,11 +408,12 @@ h1 {
 
 .task-title {
   font-weight: bold;
-  color: #172b4d;
+  color: var(--text-color);
 }
 
 .task-description {
-  color: #5e6c84;
+  color: var(--text-color);
+  opacity: 0.8;
   margin: 10px 0;
 }
 
@@ -380,6 +445,34 @@ h1 {
   color: #1d7afc;
 }
 
+.task-priority {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.task-priority.high {
+  background-color: #ff6b6b;
+  color: white;
+}
+
+.task-priority.medium {
+  background-color: #4dabf7;
+  color: white;
+}
+
+.task-priority.low {
+  background-color: #51cf66;
+  color: white;
+}
+
+.task-due-date {
+  font-size: 12px;
+  color: var(--text-color);
+  opacity: 0.8;
+}
+
 .complete-btn,
 .delete-btn {
   border: none;
@@ -407,14 +500,16 @@ h1 {
   width: 100%;
   padding: 8px;
   margin-bottom: 10px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--filter-input-border);
   border-radius: 4px;
+  background-color: var(--filter-input-bg);
+  color: var(--text-color);
 }
 
 .add-btn {
   width: 100%;
   padding: 8px;
-  background-color: #5aac44;
+  background-color: var(--button-bg);
   color: white;
   border: none;
   border-radius: 4px;
@@ -422,53 +517,7 @@ h1 {
 }
 
 .add-btn:hover {
-  background-color: #49852e;
-}
-
-.language-switcher {
-  text-align: right;
-  margin-bottom: 20px;
-}
-
-.language-switcher button {
-  margin-left: 10px;
-  padding: 5px 10px;
-  border: none;
-  border-radius: 4px;
-  background-color: #4dabf7;
-  color: white;
-  cursor: pointer;
-}
-
-.language-switcher button:hover {
-  background-color: #3b8fd9;
-}
-
-.task-priority {
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: bold;
-}
-
-.task-priority.high {
-  background-color: #ff6b6b;
-  color: white;
-}
-
-.task-priority.medium {
-  background-color: #4dabf7;
-  color: white;
-}
-
-.task-priority.low {
-  background-color: #51cf66;
-  color: white;
-}
-
-.task-due-date {
-  font-size: 12px;
-  color: #5e6c84;
+  background-color: var(--button-hover-bg);
 }
 
 .filters {
@@ -480,8 +529,39 @@ h1 {
 
 .filter-input {
   padding: 8px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--filter-input-border);
   border-radius: 4px;
   font-size: 14px;
+  background-color: var(--filter-input-bg);
+  color: var(--text-color);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .board {
+    flex-direction: column; /* Stack columns vertically on small screens */
+    align-items: center; /* Center columns */
+    gap: 20px;
+  }
+
+  .column {
+    width: 100%; /* Full width for columns on small screens */
+    max-width: 400px; /* Limit maximum width */
+  }
+
+  .filters {
+    flex-direction: column; /* Stack filter inputs vertically */
+    align-items: center; /* Center filter inputs */
+  }
+
+  .language-switcher {
+    flex-direction: column; /* Stack language buttons vertically */
+    align-items: center; /* Center language buttons */
+  }
+
+  .language-switcher button {
+    width: 100%; /* Full width for buttons on small screens */
+    max-width: 200px; /* Limit maximum width */
+  }
 }
 </style>
