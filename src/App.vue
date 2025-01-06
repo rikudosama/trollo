@@ -10,6 +10,13 @@
       </button>
     </div>
     <h1>{{ $t("appTitle") }}</h1>
+    <div class="search-bar">
+      <input
+        v-model="searchQuery"
+        :placeholder="$t('searchPlaceholder')"
+        class="search-input"
+      />
+    </div>
     <div class="filters">
       <select v-model="filterPriority" class="filter-input">
         <option value="">{{ $t("filterPriorityPlaceholder") }}</option>
@@ -50,7 +57,7 @@
             <div
               class="task-card"
               :class="{ 'task-completed': element.completed }"
-              v-if="isTaskVisible(element, column.title)"
+              v-if="isTaskVisible(element, column.title) && isTaskMatchSearch(element)"
             >
               <div class="task-header">
                 <span class="task-title">{{ element.title }}</span>
@@ -65,10 +72,7 @@
                 <span class="task-tag" :class="element.tag">{{
                   $t(element.tag + "Tag")
                 }}</span>
-                <span
-                  class="task-priority"
-                  :class="element.priority.toLowerCase()"
-                >
+                <span class="task-priority" :class="element.priority.toLowerCase()">
                   {{ element.priority }}
                 </span>
                 <span class="task-due-date" v-if="element.dueDate">
@@ -82,11 +86,7 @@
                 </button>
               </div>
               <div class="task-comments">
-                <div
-                  v-for="(comment, index) in element.comments"
-                  :key="index"
-                  class="comment"
-                >
+                <div v-for="(comment, index) in element.comments" :key="index" class="comment">
                   <span class="comment-text">💬 {{ comment }}</span>
                 </div>
                 <div class="add-comment">
@@ -98,6 +98,13 @@
                   <button @click="addComment(element)" class="comment-btn">
                     {{ $t("addCommentButton") }}
                   </button>
+                </div>
+              </div>
+              <div class="task-history">
+                <h4>Task History</h4>
+                <div v-for="(event, index) in element.history" :key="index" class="history-event">
+                  <span class="history-timestamp">{{ formatTimestamp(event.timestamp) }}</span>
+                  <span class="history-description">{{ event.description }}</span>
                 </div>
               </div>
             </div>
@@ -219,6 +226,9 @@ export default {
     const filterStatus = ref("");
     const filterDueDate = ref("");
 
+    // Search query
+    const searchQuery = ref("");
+
     // Check if a task should be visible based on filters
     const isTaskVisible = (task, columnTitle) => {
       const today = new Date().toISOString().split("T")[0];
@@ -259,9 +269,35 @@ export default {
       return true;
     };
 
+    // Check if a task matches the search query
+    const isTaskMatchSearch = (task) => {
+      if (!searchQuery.value.trim()) return true; // Show all tasks if search query is empty
+      const query = searchQuery.value.toLowerCase();
+      return (
+        task.title.toLowerCase().includes(query) ||
+        task.description.toLowerCase().includes(query) ||
+        (task.assignee && task.assignee.toLowerCase().includes(query)) ||
+        (task.comments &&
+          task.comments.some((comment) =>
+            comment.toLowerCase().includes(query)
+          ))
+      );
+    };
+
+    // Log a history event for a task
+    const logHistoryEvent = (task, description) => {
+      if (!task.history) {
+        task.history = []; // Initialize history array if it doesn't exist
+      }
+      task.history.push({
+        timestamp: new Date(),
+        description,
+      });
+    };
+
     const addTask = (column) => {
       if (column.newTaskTitle.trim() === "") return;
-      column.tasks.push({
+      const newTask = {
         id: Date.now(),
         title: column.newTaskTitle,
         description: column.newTaskDescription,
@@ -271,8 +307,11 @@ export default {
         assignee: column.newTaskAssignee,
         comments: [], // Ensure comments array is initialized
         newComment: "", // Ensure newComment field is initialized
+        history: [], // Initialize history array
         completed: false,
-      });
+      };
+      column.tasks.push(newTask);
+      logHistoryEvent(newTask, "Task created");
       column.newTaskTitle = "";
       column.newTaskDescription = "";
       column.newTaskDueDate = "";
@@ -282,6 +321,10 @@ export default {
 
     const toggleComplete = (task) => {
       task.completed = !task.completed;
+      logHistoryEvent(
+        task,
+        `Task marked as ${task.completed ? "completed" : "incomplete"}`
+      );
     };
 
     const deleteTask = (task) => {
@@ -296,6 +339,7 @@ export default {
       }
       if (task.newComment.trim() === "") return;
       task.comments.push(task.newComment);
+      logHistoryEvent(task, `Comment added: "${task.newComment}"`);
       task.newComment = "";
     };
 
@@ -308,6 +352,11 @@ export default {
       return date.toLocaleDateString(); // Format the date as needed
     };
 
+    const formatTimestamp = (timestamp) => {
+      const date = new Date(timestamp);
+      return date.toLocaleString(); // Format the timestamp as needed
+    };
+
     return {
       columns,
       isDarkMode,
@@ -315,13 +364,16 @@ export default {
       filterPriority,
       filterStatus,
       filterDueDate,
+      searchQuery,
       isTaskVisible,
+      isTaskMatchSearch,
       addTask,
       toggleComplete,
       deleteTask,
       addComment,
       changeLanguage,
       formatDate,
+      formatTimestamp,
     };
   },
 };
@@ -681,5 +733,20 @@ h1 {
 
 .task-list {
   min-height: 100px; /* Ensure columns have a minimum height for drop zones */
+}
+
+.search-bar {
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.search-input {
+  width: 100%;
+  max-width: 400px;
+  padding: 8px;
+  border: 1px solid var(--filter-input-border);
+  border-radius: 4px;
+  background-color: var(--filter-input-bg);
+  color: var(--text-color);
 }
 </style>
