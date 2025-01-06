@@ -197,18 +197,6 @@ export default {
       ]
     );
 
-    // Ensure all tasks have a comments array
-    columns.value.forEach((column) => {
-      column.tasks.forEach((task) => {
-        if (!task.comments) {
-          task.comments = []; // Initialize comments array if it doesn't exist
-        }
-        if (!task.newComment) {
-          task.newComment = ""; // Initialize newComment field if it doesn't exist
-        }
-      });
-    });
-
     // Save columns to localStorage whenever they change
     watch(
       columns,
@@ -669,5 +657,29 @@ h1 {
 
 .comment-btn:hover {
   background-color: var(--button-hover-bg);
+}
+
+/* Drag-and-drop improvements */
+.task-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.task-card.dragging {
+  transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.column.drop-zone {
+  background-color: rgba(
+    77,
+    171,
+    247,
+    0.1
+  ); /* Light blue background for drop zones */
+  border: 2px dashed #4dabf7; /* Dashed border for drop zones */
+}
+
+.task-list {
+  min-height: 100px; /* Ensure columns have a minimum height for drop zones */
 }
 </style>
